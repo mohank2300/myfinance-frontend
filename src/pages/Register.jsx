@@ -13,7 +13,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const res = await axios.post("https://myfinance-backend-0zai.onrender.com//api/auth/register", {
+      const res = await axios.post("const res = await axios.post("https://myfinance-backend-0zai.onrender.com/api/auth/register", {", {
         fullName: form.fullName,
         email: form.email,
         password: form.password,
