@@ -91,7 +91,7 @@ function Dashboard() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get("https://myfinance-backend-0zai.onrender.com//api/transactions", {
+      const res = await axios.get("https://myfinance-backend-0zai.onrender.com/api/transactions", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTransactions(res.data);
@@ -174,10 +174,10 @@ function Dashboard() {
     };
     try {
       if (editingTransaction) {
-        await axios.put(`https://myfinance-backend-0zai.onrender.com//api/transactions/${editingTransaction.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`https://myfinance-backend-0zai.onrender.com/api/transactions/${editingTransaction.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
         showToast("Transaction updated successfully", "success");
       } else {
-        await axios.post("https://myfinance-backend-0zai.onrender.com//api/transactions", payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post("https://myfinance-backend-0zai.onrender.com/api/transactions", payload, { headers: { Authorization: `Bearer ${token}` } });
         showToast("Transaction added successfully", "success");
       }
       setShowModal(false);
@@ -196,7 +196,7 @@ function Dashboard() {
     if (!window.confirm("Delete this transaction?")) return;
     setDeletingId(id);
     try {
-      await axios.delete(`https://myfinance-backend-0zai.onrender.com//api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`https://myfinance-backend-0zai.onrender.com/api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       showToast("Transaction deleted", "info");
       fetchTransactions();
     } catch (err) {
@@ -229,7 +229,7 @@ function Dashboard() {
     let success = 0, failed = 0;
     for (const id of selectedIds) {
       try {
-        await axios.delete(`https://myfinance-backend-0zai.onrender.com//api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.delete(`https://myfinance-backend-0zai.onrender.com/api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
         success++;
       } catch { failed++; }
     }
@@ -242,7 +242,7 @@ function Dashboard() {
   const handleSendReport = async () => {
     setSendingReport(true);
     try {
-      await axios.post("https://myfinance-backend-0zai.onrender.com//api/report/send", reportForm, {
+      await axios.post("https://myfinance-backend-0zai.onrender.com/api/report/send", reportForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
       showToast("Report sent to " + reportForm.email, "success");
@@ -309,7 +309,7 @@ function Dashboard() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await axios.post("https://myfinance-backend-0zai.onrender.com//api/import/pdf", formData, {
+      const res = await axios.post("https://myfinance-backend-0zai.onrender.com/api/import/pdf", formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
       const rows = res.data;
@@ -336,7 +336,7 @@ function Dashboard() {
     let success = 0, failed = 0;
     for (const row of activePreviewRows) {
       try {
-        await axios.post("https://myfinance-backend-0zai.onrender.com//api/transactions", {
+        await axios.post("https://myfinance-backend-0zai.onrender.com/api/transactions", {
           category: row.category,
           description: row.description,
           amountCents: row.amountCents,

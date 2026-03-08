@@ -21,7 +21,7 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get("https://myfinance-backend-0zai.onrender.com//api/user/me", {
+        const res = await axios.get("https://myfinance-backend-0zai.onrender.com/api/user/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(res.data);
@@ -40,7 +40,7 @@ export default function Profile() {
     setSavingProfile(true);
     setProfileMsg(null);
     try {
-      const res = await axios.put("https://myfinance-backend-0zai.onrender.com//api/user/me", profileForm, {
+      const res = await axios.put("https://myfinance-backend-0zai.onrender.com/api/user/me", profileForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(res.data);
@@ -61,7 +61,7 @@ export default function Profile() {
     setSavingPassword(true);
     setPasswordMsg(null);
     try {
-      await axios.put("https://myfinance-backend-0zai.onrender.com//api/user/password",
+      await axios.put("https://myfinance-backend-0zai.onrender.com/api/user/password",
         { currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
