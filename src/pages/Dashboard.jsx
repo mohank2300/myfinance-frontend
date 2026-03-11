@@ -83,10 +83,18 @@ function Dashboard() {
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
 
+  // Split state
+  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [splitTransaction, setSplitTransaction] = useState(null);
+  const [splitFriends, setSplitFriends] = useState([{ name: "", email: "" }]);
+  const [splittingId, setSplittingId] = useState(null);
+  const [splits, setSplits] = useState([]);
+  const [markingPaidId, setMarkingPaidId] = useState(null);
+
   const { toasts, showToast } = useToast();
   const token = localStorage.getItem("token");
 
-  useEffect(() => { fetchTransactions(); }, []);
+  useEffect(() => { fetchTransactions(); fetchSplits(); }, []);
   useEffect(() => { setSelectedIds(new Set()); }, [page, filterType, search, dateFrom, dateTo]);
 
   const fetchTransactions = async () => {
@@ -100,6 +108,58 @@ function Dashboard() {
       showToast("Failed to load transactions", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSplits = async () => {
+    try {
+      const res = await axios.get("https://myfinance-backend-0zai.onrender.com/api/splits", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSplits(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const openSplitModal = (t) => {
+    setSplitTransaction(t);
+    setSplitFriends([{ name: "", email: "" }]);
+    setShowSplitModal(true);
+  };
+
+  const handleSplitSubmit = async () => {
+    if (splitFriends.some(f => !f.name || !f.email)) {
+      showToast("Please fill all friend name and email fields", "error"); return;
+    }
+    setSplittingId(splitTransaction.id);
+    try {
+      await axios.post("https://myfinance-backend-0zai.onrender.com/api/splits", {
+        transactionId: splitTransaction.id,
+        description: splitTransaction.description || splitTransaction.category,
+        totalAmountCents: splitTransaction.amountCents,
+        friends: splitFriends,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      showToast("Split created and emails sent! 🎉", "success");
+      setShowSplitModal(false);
+      fetchSplits();
+    } catch (err) {
+      showToast("Failed to create split", "error");
+    } finally {
+      setSplittingId(null);
+    }
+  };
+
+  const handleMarkPaid = async (memberId) => {
+    setMarkingPaidId(memberId);
+    try {
+      await axios.put(`https://myfinance-backend-0zai.onrender.com/api/splits/members/${memberId}/paid`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("Marked as paid! ✅", "success");
+      fetchSplits();
+    } catch (err) {
+      showToast("Failed to mark as paid", "error");
+    } finally {
+      setMarkingPaidId(null);
     }
   };
 
@@ -665,6 +725,7 @@ function Dashboard() {
         <div className="page-tabs">
           <button className={`page-tab ${activeTab === "transactions" ? "active" : ""}`} onClick={() => setActiveTab("transactions")}>Transactions</button>
           <button className={`page-tab ${activeTab === "analytics" ? "active" : ""}`} onClick={() => setActiveTab("analytics")}>Analytics</button>
+          <button className={`page-tab ${activeTab === "splits" ? "active" : ""}`} onClick={() => setActiveTab("splits")}>👥 Splits</button>
         </div>
 
         <div className="content">
@@ -712,6 +773,7 @@ function Dashboard() {
                               <div className="actions-cell">
                                 <button className="edit-btn" onClick={() => openEditModal(t)}>Edit</button>
                                 <button className="del-btn" onClick={() => handleDelete(t.id)} disabled={deletingId === t.id}>{deletingId === t.id ? "…" : "Delete"}</button>
+                                <button className="edit-btn" style={{color:"#56ccf2",borderColor:"#56ccf2"}} onClick={() => openSplitModal(t)}>Split</button>
                               </div>
                             </td>
                           </tr>
@@ -735,6 +797,7 @@ function Dashboard() {
                               <div className="tx-card-actions">
                                 <button className="edit-btn" onClick={() => openEditModal(t)}>Edit</button>
                                 <button className="del-btn" onClick={() => handleDelete(t.id)} disabled={deletingId === t.id}>{deletingId === t.id ? "…" : "Delete"}</button>
+                                <button className="edit-btn" style={{color:"#56ccf2",borderColor:"#56ccf2"}} onClick={() => openSplitModal(t)}>Split</button>
                               </div>
                             </div>
                           </div>
@@ -803,6 +866,49 @@ function Dashboard() {
                   </ResponsiveContainer>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === "splits" && (
+            <div>
+              {splits.length === 0 ? (
+                <div className="chart-empty" style={{padding:"60px 0", textAlign:"center", color:"#555"}}>
+                  <div style={{fontSize:"2rem", marginBottom:12}}>👥</div>
+                  <div>No splits yet. Click <strong style={{color:"#e8c97e"}}>Split</strong> on any transaction to split it with friends!</div>
+                </div>
+              ) : (
+                splits.map(split => (
+                  <div key={split.id} style={{background:"#111", border:"1px solid #1e1e1e", borderRadius:12, padding:"20px", marginBottom:16}}>
+                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+                      <div>
+                        <div style={{color:"#f0ede6", fontWeight:600}}>{split.description}</div>
+                        <div style={{color:"#555", fontSize:"0.82rem"}}>{new Date(split.createdAt).toLocaleDateString()}</div>
+                      </div>
+                      <div style={{color:"#e8c97e", fontWeight:700, fontSize:"1.1rem"}}>${(split.totalAmountCents / 100).toFixed(2)}</div>
+                    </div>
+                    {split.members && split.members.map(member => (
+                      <div key={member.id} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderTop:"1px solid #1a1a1a"}}>
+                        <div>
+                          <div style={{color:"#ccc", fontSize:"0.9rem"}}>{member.friendName}</div>
+                          <div style={{color:"#555", fontSize:"0.78rem"}}>{member.friendEmail}</div>
+                        </div>
+                        <div style={{display:"flex", alignItems:"center", gap:12}}>
+                          <div style={{color:"#56ccf2", fontWeight:600}}>${(member.amountCents / 100).toFixed(2)}</div>
+                          {member.paid ? (
+                            <span style={{color:"#6fcf97", fontSize:"0.82rem", fontWeight:600}}>✅ Paid</span>
+                          ) : (
+                            <button className="edit-btn" style={{color:"#6fcf97", borderColor:"#6fcf97"}}
+                              onClick={() => handleMarkPaid(member.id)}
+                              disabled={markingPaidId === member.id}>
+                              {markingPaidId === member.id ? "…" : "Mark Paid"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
@@ -994,6 +1100,43 @@ function Dashboard() {
       )}
 
       <ToastContainer toasts={toasts} />
+
+      {/* SPLIT MODAL */}
+      {showSplitModal && splitTransaction && (
+        <div className="overlay" onClick={() => setShowSplitModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">👥 Split Expense</div>
+            <div className="modal-sub">
+              {splitTransaction.description || splitTransaction.category} — ${(splitTransaction.amountCents / 100).toFixed(2)}
+            </div>
+            <div style={{margin:"16px 0", color:"#888", fontSize:"0.85rem"}}>
+              Amount per person: <strong style={{color:"#e8c97e"}}>${((splitTransaction.amountCents / 100) / (splitFriends.length + 1)).toFixed(2)}</strong> ({splitFriends.length + 1} people including you)
+            </div>
+            {splitFriends.map((f, i) => (
+              <div key={i} style={{display:"flex", gap:8, marginBottom:10}}>
+                <input className="field-input" placeholder="Friend's name" value={f.name}
+                  onChange={e => { const arr = [...splitFriends]; arr[i].name = e.target.value; setSplitFriends(arr); }}
+                  style={{flex:1}} />
+                <input className="field-input" placeholder="Friend's email" value={f.email}
+                  onChange={e => { const arr = [...splitFriends]; arr[i].email = e.target.value; setSplitFriends(arr); }}
+                  style={{flex:1}} />
+                {splitFriends.length > 1 && (
+                  <button className="del-btn" onClick={() => setSplitFriends(splitFriends.filter((_, j) => j !== i))}>✕</button>
+                )}
+              </div>
+            ))}
+            <button className="import-btn" style={{marginBottom:16}} onClick={() => setSplitFriends([...splitFriends, { name: "", email: "" }])}>
+              + Add Friend
+            </button>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={() => setShowSplitModal(false)}>Cancel</button>
+              <button className="save-btn" onClick={handleSplitSubmit} disabled={!!splittingId}>
+                {splittingId ? "Sending…" : "Split & Notify Friends"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
