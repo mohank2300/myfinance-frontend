@@ -361,24 +361,24 @@ function Dashboard() {
     if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
 
-  const handleExportCSV = () => {
-    const headers = ["Date", "Category", "Description", "Type", "Amount"];
-    const rows = filteredTransactions.map(t => [
-      new Date(t.createdAt).toLocaleDateString(),
-      t.category,
-      `"${t.description}"`,
-      t.type,
-      (t.amountCents / 100).toFixed(2)
-    ]);
-    const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "myfinance-transactions.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+ const handleExportCSV = () => {
+   const headers = ["Date", "Category", "Description", "Type", "Amount"];
+   const rows = transactions.map(t => [
+     new Date(t.createdAt).toLocaleDateString(),
+     t.category,
+     `"${t.description}"`,
+     t.type,
+     (t.amountCents / 100).toFixed(2)
+   ]);
+   const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+   const blob = new Blob([csv], { type: "text/csv" });
+   const url = URL.createObjectURL(blob);
+   const a = document.createElement("a");
+   a.href = url;
+   a.download = "myfinance-transactions.csv";
+   a.click();
+   URL.revokeObjectURL(url);
+ };
 
   return (
     <>
@@ -616,10 +616,10 @@ function Dashboard() {
           <div className="nav-right">
             <span className="nav-badge">{transactions.length} transactions</span>
             <button className="logout-btn" onClick={() => { setReportForm({ email: "", period: "THIS_MONTH" }); setShowReportModal(true); }}>📧 Report</button>
+            <button className="import-btn" onClick={handleExportCSV}>📥 Export CSV</button>
             <button className="logout-btn" onClick={() => window.location.href = "/profile"}>Profile</button>
             <button className="logout-btn" onClick={handleLogout}>Logout</button>
             <button className="hamburger" onClick={() => setMenuOpen(o => !o)}>{menuOpen ? "✕" : "☰"}</button>
-            <button className="import-btn" onClick={handleExportCSV}>📥 Export CSV</button>
           </div>
         </nav>
 
