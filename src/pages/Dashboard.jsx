@@ -116,8 +116,9 @@ function Dashboard() {
       const res = await axios.get("https://myfinance-backend-0zai.onrender.com/api/splits", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSplits(res.data);
-    } catch (err) { console.error(err); }
+      console.log("Splits data:", res.data);
+      setSplits(Array.isArray(res.data) ? res.data : []);
+    } catch (err) { console.error("Splits error:", err); }
   };
 
   const openSplitModal = (t) => {
@@ -871,7 +872,7 @@ function Dashboard() {
 
           {activeTab === "splits" && (
             <div>
-              {splits.length === 0 ? (
+              {!splits || splits.length === 0 ? (
                 <div className="chart-empty" style={{padding:"60px 0", textAlign:"center", color:"#555"}}>
                   <div style={{fontSize:"2rem", marginBottom:12}}>👥</div>
                   <div>No splits yet. Click <strong style={{color:"#e8c97e"}}>Split</strong> on any transaction to split it with friends!</div>
